@@ -853,6 +853,7 @@ GameObject:
   - component: {fileID: 873210586}
   - component: {fileID: 873210588}
   - component: {fileID: 873210589}
+  - component: {fileID: 873210590}
   m_Layer: 0
   m_Name: ArcadeMachine
   m_TagString: Untagged
@@ -984,10 +985,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b13ea623e80614840942cefb2e8f1da2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArcadeMachineInteraction
-  machineId: PacMan
-  miniGameSceneName: MiniGame_PacMan
   interactionPromptPrefab: {fileID: 8715673494010729698, guid: 549ea7190c0edac40a557c3ca7d47bc9, type: 3}
   promptOffset: {x: 0, y: -1.5, z: 0}
+--- !u!114 &873210590
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 873210585}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f57a491b4b39ef44493e9d08462cf9b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArcadeMachine
+  machineId: PacMan_01
+  data: {fileID: 11400000, guid: 6f0b720034088f3439cc14db395f8027, type: 2}
+  currentState: 2
 --- !u!1 &900677663
 GameObject:
   m_ObjectHideFlags: 0
@@ -1237,6 +1251,7 @@ GameObject:
   - component: {fileID: 1095514080}
   - component: {fileID: 1095514079}
   - component: {fileID: 1095514078}
+  - component: {fileID: 1095514082}
   m_Layer: 0
   m_Name: ArcadeMachine (2)
   m_TagString: Untagged
@@ -1256,8 +1271,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b13ea623e80614840942cefb2e8f1da2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArcadeMachineInteraction
-  machineId: 
-  miniGameSceneName: 
   interactionPromptPrefab: {fileID: 8715673494010729698, guid: 549ea7190c0edac40a557c3ca7d47bc9, type: 3}
   promptOffset: {x: 0, y: -1.5, z: 0}
 --- !u!58 &1095514079
@@ -1370,6 +1383,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 873210587}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1095514082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1095514077}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f57a491b4b39ef44493e9d08462cf9b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArcadeMachine
+  machineId: SpaceInvaders_01
+  data: {fileID: 11400000, guid: 7081982ba6524664b8206eea28362dad, type: 2}
+  currentState: 1
 --- !u!1 &1140224580
 GameObject:
   m_ObjectHideFlags: 0
@@ -1382,6 +1410,7 @@ GameObject:
   - component: {fileID: 1140224583}
   - component: {fileID: 1140224582}
   - component: {fileID: 1140224581}
+  - component: {fileID: 1140224585}
   m_Layer: 0
   m_Name: ArcadeMachine (1)
   m_TagString: Untagged
@@ -1401,8 +1430,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b13ea623e80614840942cefb2e8f1da2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArcadeMachineInteraction
-  machineId: 
-  miniGameSceneName: 
   interactionPromptPrefab: {fileID: 8715673494010729698, guid: 549ea7190c0edac40a557c3ca7d47bc9, type: 3}
   promptOffset: {x: 0, y: -1.5, z: 0}
 --- !u!58 &1140224582
@@ -1515,6 +1542,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 873210587}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1140224585
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1140224580}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f57a491b4b39ef44493e9d08462cf9b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArcadeMachine
+  machineId: Pinball_01
+  data: {fileID: 11400000, guid: 1c865e3d4b5ff6e4c8c22146273a30f9, type: 2}
+  currentState: 0
 --- !u!1 &1258623020
 GameObject:
   m_ObjectHideFlags: 0

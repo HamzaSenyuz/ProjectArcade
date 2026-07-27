@@ -1,23 +1,27 @@
 using UnityEngine;
 
+[RequireComponent(typeof(ArcadeMachine))]
 public class ArcadeMachineInteraction : MonoBehaviour
 {
-    public string machineId = "PacMan";
-    public string miniGameSceneName = "MiniGame_PacMan";
-
     [Header("UI")]
-    public GameObject interactionPromptPrefab;  // Inspector'dan atanacak
-    public Vector3 promptOffset = new Vector3(0, 1.5f, 0);  // Makinenin üstünde nerede duracak
+    public GameObject interactionPromptPrefab;
+    public Vector3 promptOffset = new Vector3(0, -1.5f, 0);
 
-    private GameObject currentPrompt;  // Şu an gösterilen prompt'un referansı
+    private ArcadeMachine machine;
+    private GameObject currentPrompt;
     private bool playerInRange = false;
     private Transform playerTransform;
+
+    void Awake()
+    {
+        machine = GetComponent<ArcadeMachine>();
+    }
 
     void Update()
     {
         if (playerInRange && Input.GetKeyDown(KeyCode.E))
         {
-            StartMiniGame();
+            HandleInteraction();
         }
     }
 
@@ -41,17 +45,75 @@ public class ArcadeMachineInteraction : MonoBehaviour
         }
     }
 
+    void HandleInteraction()
+    {
+        switch (machine.CurrentState)
+        {
+            case MachineState.Active:
+                StartMiniGame();
+                break;
+
+            case MachineState.Purchasable:
+                machine.TryUnlock();
+                UpdatePromptText();
+                break;
+
+            case MachineState.Locked:
+                Debug.Log("Bu makine şu an alınamaz.");
+                break;
+        }
+    }
+
+    void StartMiniGame()
+    {
+        if (machine.IsOccupied)
+        {
+            Debug.Log("Makine dolu, biraz bekle.");
+            return;
+        }
+
+        HidePrompt();
+        Vector2 currentPos = playerTransform.position;
+        SceneLoader.Instance.LoadMiniGame(
+            machine.data.miniGameSceneName,
+            machine.machineId,
+            currentPos
+        );
+    }
+
     void ShowPrompt()
     {
         if (interactionPromptPrefab == null) return;
-        if (currentPrompt != null) return;  // Zaten gösteriliyor
+        if (currentPrompt != null) return;
 
         currentPrompt = Instantiate(
             interactionPromptPrefab,
             transform.position + promptOffset,
             Quaternion.identity,
-            transform  // Makinenin çocuğu olsun
+            transform
         );
+        UpdatePromptText();
+    }
+
+    void UpdatePromptText()
+    {
+        if (currentPrompt == null) return;
+
+        var text = currentPrompt.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+        if (text == null) return;
+
+        switch (machine.CurrentState)
+        {
+            case MachineState.Active:
+                text.text = "[E] Oyna";
+                break;
+            case MachineState.Purchasable:
+                text.text = $"[E] Satın Al ({machine.data.purchasePrice})";
+                break;
+            case MachineState.Locked:
+                text.text = "Kilitli";
+                break;
+        }
     }
 
     void HidePrompt()
@@ -61,12 +123,5 @@ public class ArcadeMachineInteraction : MonoBehaviour
             Destroy(currentPrompt);
             currentPrompt = null;
         }
-    }
-
-    void StartMiniGame()
-    {
-        HidePrompt();  // Sahne değişmeden önce temizle
-        Vector2 currentPos = playerTransform.position;
-        SceneLoader.Instance.LoadMiniGame(miniGameSceneName, machineId, currentPos);
     }
 }
