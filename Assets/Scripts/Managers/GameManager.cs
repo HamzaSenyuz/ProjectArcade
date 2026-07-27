@@ -1,25 +1,47 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance;  // Singleton referansı
+    public static GameManager Instance;
 
     // Kalıcı veriler
-    public int playerMoney = 0;
-    public Vector2 lastPlayerPosition;    // Salondaki son konum
-    public string lastMachineId;          // Hangi makineye girdi
+    public Vector2 lastPlayerPosition;
+    public string lastMachineId;
+
+    // Makine durumları: machineId → MachineState
+    public Dictionary<string, MachineState> machineStates = new Dictionary<string, MachineState>();
 
     void Awake()
     {
-        // Singleton kontrolü
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);  // Sahne değişince silme!
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
-            Destroy(gameObject);  // Zaten bir tane var, bunu sil
+            Destroy(gameObject);
         }
+    }
+
+    /// <summary>
+    /// Bir makinenin durumunu kaydeder (satın alındığında vs.)
+    /// </summary>
+    public void SaveMachineState(string machineId, MachineState state)
+    {
+        machineStates[machineId] = state;
+    }
+
+    /// <summary>
+    /// Makinenin kaydedilmiş durumunu döner. Yoksa null döner.
+    /// </summary>
+    public MachineState? GetMachineState(string machineId)
+    {
+        if (machineStates.TryGetValue(machineId, out MachineState state))
+        {
+            return state;
+        }
+        return null;
     }
 }

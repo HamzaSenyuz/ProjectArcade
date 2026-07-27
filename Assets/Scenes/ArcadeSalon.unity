@@ -1001,7 +1001,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ArcadeMachine
   machineId: PacMan_01
   data: {fileID: 11400000, guid: 6f0b720034088f3439cc14db395f8027, type: 2}
-  currentState: 2
+  initialState: 2
 --- !u!1 &900677663
 GameObject:
   m_ObjectHideFlags: 0
@@ -1397,7 +1397,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ArcadeMachine
   machineId: SpaceInvaders_01
   data: {fileID: 11400000, guid: 7081982ba6524664b8206eea28362dad, type: 2}
-  currentState: 1
+  initialState: 1
 --- !u!1 &1140224580
 GameObject:
   m_ObjectHideFlags: 0
@@ -1556,7 +1556,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ArcadeMachine
   machineId: Pinball_01
   data: {fileID: 11400000, guid: 1c865e3d4b5ff6e4c8c22146273a30f9, type: 2}
-  currentState: 0
+  initialState: 0
 --- !u!1 &1258623020
 GameObject:
   m_ObjectHideFlags: 0
@@ -1969,7 +1969,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c37a4f1d716baa64b929544a3fa56bc2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  playerMoney: 0
   lastPlayerPosition: {x: 0, y: 0}
   lastMachineId: 
 --- !u!1 &1585057135

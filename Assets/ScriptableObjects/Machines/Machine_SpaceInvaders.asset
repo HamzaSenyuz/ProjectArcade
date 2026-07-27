@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Machine_SpaceInvaders
   m_EditorClassIdentifier: Assembly-CSharp::MachineData
   displayName: Yeni Makine
-  miniGameSceneName: MiniGame_PacMan
+  miniGameSceneName: MiniGame_SpaceInvaders
   purchasePrice: 500
   incomePerPlay: 10
   playDuration: 15

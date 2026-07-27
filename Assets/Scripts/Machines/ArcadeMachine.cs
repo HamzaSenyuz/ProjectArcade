@@ -3,29 +3,36 @@ using UnityEngine;
 public class ArcadeMachine : MonoBehaviour
 {
     [Header("Kimlik")]
-    public string machineId = "PacMan_01";     // Sahnedeki benzersiz ID
-    public MachineData data;                    // ScriptableObject referansı
+    public string machineId = "PacMan_01";
+    public MachineData data;
 
-    [Header("Durum")]
-    [SerializeField] private MachineState currentState = MachineState.Active;
+    [Header("Başlangıç Durumu")]
+    [SerializeField] private MachineState initialState = MachineState.Active;
 
-    // Runtime durumu
+    private MachineState currentState;
     private bool isOccupied = false;
-    private GameObject currentUser;    // Şu an kim oynuyor (NPC veya Player)
+    private GameObject currentUser;
 
-    // Dışa açık okuma
     public MachineState CurrentState => currentState;
     public bool IsOccupied => isOccupied;
     public bool IsAvailable => currentState == MachineState.Active && !isOccupied;
 
     void Start()
     {
+        // GameManager'da kayıtlı durum varsa onu kullan, yoksa initialState
+        if (GameManager.Instance != null)
+        {
+            MachineState? saved = GameManager.Instance.GetMachineState(machineId);
+            currentState = saved ?? initialState;
+        }
+        else
+        {
+            currentState = initialState;
+        }
+
         ApplyVisualState();
     }
 
-    /// <summary>
-    /// Makineyi kullanmaya başlar (NPC veya oyuncu tarafından çağrılır)
-    /// </summary>
     public bool TryOccupy(GameObject user)
     {
         if (!IsAvailable)
@@ -40,9 +47,6 @@ public class ArcadeMachine : MonoBehaviour
         return true;
     }
 
-    /// <summary>
-    /// Makineyi serbest bırakır
-    /// </summary>
     public void Release()
     {
         Debug.Log($"{data.displayName} makinesi boşaldı.");
@@ -50,9 +54,6 @@ public class ArcadeMachine : MonoBehaviour
         currentUser = null;
     }
 
-    /// <summary>
-    /// Kilidini aç (ödeme yapıldıktan sonra)
-    /// </summary>
     public bool TryUnlock()
     {
         if (currentState != MachineState.Purchasable)
@@ -68,14 +69,18 @@ public class ArcadeMachine : MonoBehaviour
         }
 
         currentState = MachineState.Active;
+
+        // Kaydet — sahne değişse bile hatırlansın
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SaveMachineState(machineId, currentState);
+        }
+
         ApplyVisualState();
         Debug.Log($"{data.displayName} açıldı! (-{data.purchasePrice} jeton)");
         return true;
     }
 
-    /// <summary>
-    /// Görsel durumu günceller (kilitli / aktif)
-    /// </summary>
     private void ApplyVisualState()
     {
         if (data == null) return;
@@ -94,10 +99,9 @@ public class ArcadeMachine : MonoBehaviour
         }
         else
         {
-            // Sprite yoksa sadece rengi değiştir (şu anki placeholder senaryosu)
             sr.color = currentState == MachineState.Active
-                ? new Color(0.6f, 0.1f, 0.1f)  // koyu kırmızı = aktif
-                : new Color(0.3f, 0.3f, 0.3f); // gri = kilitli
+                ? new Color(0.6f, 0.1f, 0.1f)
+                : new Color(0.3f, 0.3f, 0.3f);
         }
     }
 }
