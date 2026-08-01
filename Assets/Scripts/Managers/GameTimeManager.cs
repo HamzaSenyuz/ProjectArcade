@@ -14,6 +14,8 @@ public class GameTimeManager : MonoBehaviour
     private float currentMinutes;    // 0..1440 (bir günde 1440 dakika)
     private int currentDay = 1;
     private bool isSalonOpen = false;
+    private bool isDayEnded = false;  // Gün bitti, yeni gün için bekleniyor
+    public bool IsDayEnded => isDayEnded;
 
     // Events
     public static event Action<int, int> OnTimeChanged;   // (saat, dakika)
@@ -56,32 +58,30 @@ public class GameTimeManager : MonoBehaviour
     void Update()
     {
         AdvanceTime();
+
+        // === DEBUG (sonra sil) ===
+        if (Input.GetKeyDown(KeyCode.N))  // N = Next Day
+        {
+            StartNextDay();
+        }
+        // ==========================
     }
 
     private void AdvanceTime()
     {
-        // 1 gerçek saniye = kaç oyun dakikası?
-        // 1440 oyun dakikası / realSecondsPerDay gerçek saniye
+        // Gün bittiyse zaman durur, oyuncu yeni günü başlatana kadar bekle
+        if (isDayEnded) return;
+
         float minutesPerSecond = 1440f / realSecondsPerDay;
         currentMinutes += minutesPerSecond * Time.deltaTime;
 
-        // Her frame zaman değişir
         OnTimeChanged?.Invoke(CurrentHour, CurrentMinute);
 
-        // Saat değişti mi?
         if (CurrentHour != lastAnnouncedHour)
         {
             lastAnnouncedHour = CurrentHour;
             OnHourChanged?.Invoke(CurrentHour);
             CheckSalonSchedule();
-        }
-
-        // Gece yarısı geçtiyse yeni gün
-        if (currentMinutes >= 1440f)
-        {
-            currentMinutes = openingHour * 60;
-            currentDay++;
-            StartNewDay();
         }
     }
 
@@ -113,12 +113,11 @@ public class GameTimeManager : MonoBehaviour
     private void CloseSalon()
     {
         isSalonOpen = false;
+        isDayEnded = true;    // Gün bitti bayrağını kaldır
         Debug.Log($"🔒 Salon kapandı ({closingHour:00}:00)");
         OnSalonClosed?.Invoke();
-
-        // Kısa süre sonra günü bitir (mevcut NPC'ler çıksın diye)
         OnDayEnded?.Invoke(currentDay);
-        // Not: Şimdilik gece yarısı otomatik yeni gün. İleride "Uyu" butonu ekleyebiliriz.
+        Debug.Log("⏸️ Yeni gün başlaması için 'StartNextDay()' bekleniyor.");
     }
 
     /// <summary>
@@ -128,5 +127,21 @@ public class GameTimeManager : MonoBehaviour
     {
         currentMinutes = hour * 60 + minute;
         lastAnnouncedHour = -1;
+    }
+    /// <summary>
+    /// Yeni günü manuel olarak başlatır (oyuncu butona bastığında çağrılır)
+    /// </summary>
+    public void StartNextDay()
+    {
+        if (!isDayEnded)
+        {
+            Debug.LogWarning("Gün henüz bitmedi, yeni gün başlatılamaz.");
+            return;
+        }
+
+        isDayEnded = false;
+        currentDay++;
+        currentMinutes = openingHour * 60;
+        StartNewDay();
     }
 }
