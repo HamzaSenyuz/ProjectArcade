@@ -1,79 +1,179 @@
+using System.Collections;
 using UnityEngine;
 
+[RequireComponent(typeof(NPCMovement))]
 public class NPCController : MonoBehaviour
 {
-    public float moveSpeed = 2f;
-    public Transform targetMachine;    // Hangi makineye gidecek
-    public float playDuration = 5f;    // Kaç saniye oynayacak
+    [Header("Davranış Ayarları")]
+    [SerializeField] private float maxWaitTime = 5f;        // Boş makine yoksa ne kadar bekler
+    [SerializeField] private float retryInterval = 1f;      // Bekleme sırasında kaç saniyede bir tekrar dener
+    [SerializeField] private Vector2 exitPoint = new Vector2(0, -8f);  // Salondan çıkış noktası
 
-    private Rigidbody2D rb;
-    private float playTimer = 0f;
+    private NPCMovement movement;
+    private IMachineSelector machineSelector;
+    private ArcadeMachine targetMachine;
+    private NPCState currentState;
+    private float waitTimer;
 
-    private enum NPCState { Entering, Walking, Playing, Leaving }
-    private NPCState currentState = NPCState.Walking;
+    public NPCState CurrentState => currentState;
+
+    void Awake()
+    {
+        movement = GetComponent<NPCMovement>();
+
+        // Selector'ı burada oluşturuyoruz. İleride NPCSpawner'dan enjekte edebiliriz.
+        machineSelector = new SimpleMachineSelector();
+
+        movement.OnTargetReached += HandleTargetReached;
+    }
+
+    void OnDestroy()
+    {
+        if (movement != null)
+        {
+            movement.OnTargetReached -= HandleTargetReached;
+        }
+    }
 
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
+        TransitionTo(NPCState.SearchingForMachine);
     }
 
     void Update()
     {
-        switch (currentState)
+        // Sadece bazı state'ler update mantığı gerektirir
+        if (currentState == NPCState.WaitingForFreeMachine)
         {
-            case NPCState.Walking:
-                WalkToMachine();
+            UpdateWaiting();
+        }
+    }
+
+    // === STATE MANAGEMENT ===
+
+    private void TransitionTo(NPCState newState)
+    {
+        currentState = newState;
+
+        switch (newState)
+        {
+            case NPCState.SearchingForMachine:
+                SearchForMachine();
+                break;
+
+            case NPCState.WalkingToMachine:
+                // WalkingToMachine, SearchForMachine içinde ateşleniyor
+                break;
+
+            case NPCState.WaitingForFreeMachine:
+                waitTimer = 0f;
+                movement.Stop();
+                Debug.Log($"{name}: Boş makine yok, bekliyorum...");
                 break;
 
             case NPCState.Playing:
-                PlayAtMachine();
+                // Playing state, HandleTargetReached içinde başlıyor
                 break;
 
             case NPCState.Leaving:
-                LeaveArcade();
+                Debug.Log($"{name}: Salondan ayrılıyorum.");
+                movement.MoveTo(exitPoint);
                 break;
         }
     }
 
-    void WalkToMachine()
+    // === STATE BEHAVIORS ===
+
+    private void SearchForMachine()
     {
-        if (targetMachine == null) return;
+        ArcadeMachine chosen = machineSelector.SelectMachine(this);
 
-        Vector2 direction = (targetMachine.position - transform.position).normalized;
-        float distance = Vector2.Distance(transform.position, targetMachine.position);
-
-        if (distance > 0.5f)
+        if (chosen == null)
         {
-            rb.MovePosition(rb.position + direction * moveSpeed * Time.fixedDeltaTime);
+            TransitionTo(NPCState.WaitingForFreeMachine);
+            return;
         }
-        else
+
+        targetMachine = chosen;
+        Debug.Log($"{name}: {chosen.data.displayName} seçildi, yürüyorum.");
+        movement.MoveTo(chosen.transform.position);
+        TransitionTo(NPCState.WalkingToMachine);
+    }
+
+    private void UpdateWaiting()
+    {
+        waitTimer += Time.deltaTime;
+
+        // Belirli aralıklarla tekrar dene
+        if (waitTimer % retryInterval < Time.deltaTime)
         {
-            rb.linearVelocity = Vector2.zero;
-            currentState = NPCState.Playing;
-            Debug.Log("NPC makinede oynamaya başladı!");
+            ArcadeMachine chosen = machineSelector.SelectMachine(this);
+            if (chosen != null)
+            {
+                targetMachine = chosen;
+                Debug.Log($"{name}: {chosen.data.displayName} boşaldı, yürüyorum.");
+                movement.MoveTo(chosen.transform.position);
+                TransitionTo(NPCState.WalkingToMachine);
+                return;
+            }
+        }
+
+        // Süre dolduysa çık
+        if (waitTimer >= maxWaitTime)
+        {
+            Debug.Log($"{name}: Çok bekledim, ayrılıyorum.");
+            TransitionTo(NPCState.Leaving);
         }
     }
 
-    void PlayAtMachine()
+    private void HandleTargetReached()
     {
-        playTimer += Time.deltaTime;
-
-        if (playTimer >= playDuration)
+        switch (currentState)
         {
-            currentState = NPCState.Leaving;
-            Debug.Log("NPC ayrılıyor!");
+            case NPCState.WalkingToMachine:
+                TryStartPlaying();
+                break;
+
+            case NPCState.Leaving:
+                Debug.Log($"{name}: Salondan çıktım.");
+                Destroy(gameObject);
+                break;
         }
     }
 
-    void LeaveArcade()
+    private void TryStartPlaying()
     {
-        Vector2 exitDirection = Vector2.left;
-        rb.MovePosition(rb.position + exitDirection * moveSpeed * Time.fixedDeltaTime);
-
-        if (transform.position.x < -10f)
+        if (targetMachine == null)
         {
-            Debug.Log("NPC salonu terk etti.");
-            Destroy(gameObject);
+            TransitionTo(NPCState.SearchingForMachine);
+            return;
         }
+
+        // Yürürken makine dolmuş olabilir!
+        if (!targetMachine.TryOccupy(gameObject))
+        {
+            targetMachine = null;
+            TransitionTo(NPCState.SearchingForMachine);
+            return;
+        }
+
+        // Ödemeyi yap
+        MoneyManager.Instance.AddMoney(targetMachine.data.incomePerPlay);
+
+        // Oyna
+        currentState = NPCState.Playing;
+        StartCoroutine(PlayRoutine());
+    }
+
+    private IEnumerator PlayRoutine()
+    {
+        float duration = targetMachine.data.playDuration;
+        Debug.Log($"{name}: {duration} saniye oynayacağım.");
+        yield return new WaitForSeconds(duration);
+
+        targetMachine.Release();
+        targetMachine = null;
+
+        TransitionTo(NPCState.Leaving);
     }
 }
